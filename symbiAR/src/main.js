@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import * as LocAR from "locar";
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // Request device orientation permission for iOS
 async function requestDeviceOrientation() {
@@ -59,119 +58,93 @@ crosshair.position.z = -1;
 camera.add(crosshair);
 scene.add(camera);
 
-// Store model data
-const models = new Map();
+// Store box data
+const boxes = new Map();
 
 // Constants
 const ANIMATION_SPEED = 0.1;
-const DISTANCE_MULTIPLIER = 0.8;
-const HEIGHT_OFFSET = 0;
-const MODEL_SCALE = 2.0; // Adjust this based on your model size
+const DISTANCE_MULTIPLIER = 0.8; // Adjust this value to bring boxes closer/further
+const HEIGHT_OFFSET = 0; // Adjust if boxes appear too high/low
 
 let firstLocation = true;
 let deviceOrientationControls;
 
-// Load 3D models
-const loader = new GLTFLoader();
-const modelURLs = [
-  './mungee.glb',  // Replace with your model URLs
-  './mungee.glb',
-  './mungee.glb',
-  './mungee.glb'
-];
-
-// Create models at initial GPS location
+// Create boxes at initial GPS location
 locar.on("gpsupdate", (pos) => {
   if (firstLocation) {
-    const modelProps = [
-      { latDis: 0.001 * DISTANCE_MULTIPLIER, lonDis: 0, modelIndex: 0 },
-      { latDis: -0.001 * DISTANCE_MULTIPLIER, lonDis: 0, modelIndex: 1 },
-      { latDis: 0, lonDis: -0.001 * DISTANCE_MULTIPLIER, modelIndex: 2 },
-      { latDis: 0, lonDis: 0.001 * DISTANCE_MULTIPLIER, modelIndex: 3 },
+    const boxSize = 10;
+    const geom = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
+
+    const boxProps = [
+      { latDis: 0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xff0000 },
+      { latDis: -0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffff00 },
+      { latDis: 0, lonDis: -0.001 * DISTANCE_MULTIPLIER, color: 0x00ffff },
+      { latDis: 0, lonDis: 0.001 * DISTANCE_MULTIPLIER, color: 0x00ff00 },
     ];
 
-    modelProps.forEach(({ latDis, lonDis, modelIndex }) => {
-      loader.load(
-        modelURLs[modelIndex],
-        (gltf) => {
-          const model = gltf.scene;
-          
-          // Scale and configure the model
-          model.scale.set(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-          model.traverse((node) => {
-            if (node.isMesh) {
-              node.material.transparent = true;
-              node.material.opacity = 0.8;
-              node.material.depthTest = false;
-            }
-          });
+    boxProps.forEach(({ latDis, lonDis, color }) => {
+      const material = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.8,
+        depthTest: false,
+      });
+      const mesh = new THREE.Mesh(geom, material);
 
-          locar.add(
-            model,
-            pos.coords.longitude + lonDis * 0.5,
-            pos.coords.latitude + latDis * 0.5,
-            HEIGHT_OFFSET
-          );
-
-          // Debug logging
-          console.log('Model added at:', {
-            longitude: pos.coords.longitude + lonDis * 0.5,
-            latitude: pos.coords.latitude + latDis * 0.5,
-            height: HEIGHT_OFFSET,
-            worldPosition: model.position.clone()
-          });
-
-          models.set(model, {
-            originalPosition: model.position.clone(),
-            originalScale: model.scale.clone(),
-            originalRotation: model.rotation.clone(),
-            lastHoverTime: 0,
-          });
-
-          model.renderOrder = 1;
-        },
-        (progress) => {
-          console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
-        },
-        (error) => {
-          console.error('Error loading model:', error);
-        }
+      locar.add(
+        mesh,
+        pos.coords.longitude + lonDis * 0.5,
+        pos.coords.latitude + latDis * 0.5,
+        HEIGHT_OFFSET
       );
+
+      // Debug logging
+      console.log('Box added at:', {
+        longitude: pos.coords.longitude + lonDis * 0.5,
+        latitude: pos.coords.latitude + latDis * 0.5,
+        height: HEIGHT_OFFSET,
+        worldPosition: mesh.position.clone()
+      });
+
+      boxes.set(mesh, {
+        originalPosition: mesh.position.clone(),
+        originalScale: mesh.scale.clone(),
+        originalColor: color,
+        lastHoverTime: 0,
+      });
+
+      mesh.renderOrder = 1;
     });
 
     firstLocation = false;
   }
 });
 
-function updateModels() {
+function updateBoxes() {
   // Update raycaster
   pointer.set(0, 0);
   raycaster.setFromCamera(pointer, camera);
 
-  const modelArray = Array.from(models.keys());
-  const intersects = raycaster.intersectObjects(modelArray, true);
+  const boxArray = Array.from(boxes.keys());
+  const intersects = raycaster.intersectObjects(boxArray);
 
-  modelArray.forEach((model) => {
-    const data = models.get(model);
-    const isHovered = intersects.length > 0 && 
-      (intersects[0].object === model || intersects[0].object.parent === model);
+  boxArray.forEach((box) => {
+    const data = boxes.get(box);
+    const isHovered = intersects.length > 0 && intersects[0].object === box;
 
     if (isHovered) {
-      // Bring model forward for inspection
+      // Bring boxes forward for inspection
       const forwardVector = new THREE.Vector3();
       camera.getWorldDirection(forwardVector);
       forwardVector.multiplyScalar(20);
 
       const targetPosition = camera.position.clone().add(forwardVector);
-      model.position.lerp(targetPosition, ANIMATION_SPEED);
-      
-      // Add some rotation animation when hovered
-      model.rotation.y += 0.01;
+      box.position.lerp(targetPosition, ANIMATION_SPEED);
     } else {
-      // Return to original position and rotation
-      model.position.lerp(data.originalPosition, ANIMATION_SPEED);
-      model.scale.lerp(data.originalScale, ANIMATION_SPEED);
-      model.rotation.setFromVector3(data.originalRotation);
+      // Return to original position
+      box.position.lerp(data.originalPosition, ANIMATION_SPEED);
+      box.scale.lerp(data.originalScale, ANIMATION_SPEED);
+      box.material.color.setHex(data.originalColor);
     }
   });
 }
@@ -185,14 +158,14 @@ async function initAR() {
 
 // Create start button
 const startButton = document.createElement('button');
-startButton.innerHTML = 'Start AR';
+startButton.innerHTML = 'Start Experience';
 startButton.style.position = 'fixed';
 startButton.style.top = '50%';
 startButton.style.left = '50%';
 startButton.style.transform = 'translate(-50%, -50%)';
 startButton.style.zIndex = '1000';
-startButton.style.padding = '12px 24px';
-startButton.style.fontSize = '18px';
+startButton.style.padding = '24px 48px';
+startButton.style.fontSize = '32px';
 startButton.style.backgroundColor = '#4CAF50';
 startButton.style.color = 'white';
 startButton.style.border = 'none';
@@ -211,7 +184,7 @@ renderer.setAnimationLoop(() => {
   if (deviceOrientationControls) {
     deviceOrientationControls.update();
   }
-  updateModels();
+  updateBoxes();
   renderer.render(scene, camera);
 });
 
@@ -226,27 +199,14 @@ debugDiv.style.padding = "10px";
 debugDiv.style.fontFamily = "monospace";
 document.body.appendChild(debugDiv);
 
-// Add loading indicator
-const loadingDiv = document.createElement("div");
-loadingDiv.style.position = "fixed";
-loadingDiv.style.top = "50%";
-loadingDiv.style.left = "50%";
-loadingDiv.style.transform = "translate(-50%, -50%)";
-loadingDiv.style.color = "white";
-loadingDiv.style.backgroundColor = "rgba(0,0,0,0.7)";
-loadingDiv.style.padding = "20px";
-loadingDiv.style.borderRadius = "10px";
-loadingDiv.style.display = "none";
-document.body.appendChild(loadingDiv);
-
 // Update debug info every frame
 setInterval(() => {
-  const modelArray = Array.from(models.keys());
-  const intersects = raycaster.intersectObjects(modelArray, true);
+  const boxArray = Array.from(boxes.keys());
+  const intersects = raycaster.intersectObjects(boxArray);
   debugDiv.innerHTML = `
     Device: ${/iPhone|iPad|iPod/.test(navigator.userAgent) ? 'iOS' : 'Other'}<br>
     Orientation: ${screen.orientation?.type || 'N/A'}<br>
-    Models in scene: ${modelArray.length}<br>
+    Boxes in scene: ${boxArray.length}<br>
     Raycast hits: ${intersects.length}<br>
     ${intersects.length > 0 ? `Hit distance: ${intersects[0].distance.toFixed(2)}` : "No hits"}<br>
     Camera position: ${camera.position.toArray().map((v) => v.toFixed(2)).join(", ")}<br>
