@@ -74,10 +74,10 @@ let deviceOrientationControls;
 // Load 3D models
 const loader = new GLTFLoader();
 const modelURLs = [
-  '../mungee.gltf',  // Replace with your model URLs
-  '../mungee.gltf',
-  '../mungee.gltf',
-  '../mungee.gltf'
+  '../mungee.glb',  // Replace with your model URLs
+  '../mungee.glb',
+  '../mungee.glb',
+  '../mungee.glb'
 ];
 
 // Create models at initial GPS location
