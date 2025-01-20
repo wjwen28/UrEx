@@ -158,7 +158,7 @@ async function initAR() {
 
 // Create start button
 const startButton = document.createElement('button');
-startButton.innerHTML = 'Start Experience';
+startButton.innerHTML = 'YEAH';
 startButton.style.position = 'fixed';
 startButton.style.top = '50%';
 startButton.style.left = '50%';
