@@ -158,14 +158,14 @@ async function initAR() {
 
 // Create start button
 const startButton = document.createElement('button');
-startButton.innerHTML = 'Start AR';
+startButton.innerHTML = 'Start Experience';
 startButton.style.position = 'fixed';
 startButton.style.top = '50%';
 startButton.style.left = '50%';
 startButton.style.transform = 'translate(-50%, -50%)';
 startButton.style.zIndex = '1000';
-startButton.style.padding = '12px 24px';
-startButton.style.fontSize = '18px';
+startButton.style.padding = '24px 48px';
+startButton.style.fontSize = '32px';
 startButton.style.backgroundColor = '#4CAF50';
 startButton.style.color = 'white';
 startButton.style.border = 'none';
