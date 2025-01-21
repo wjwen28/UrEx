@@ -8,21 +8,39 @@ const fontLoader = new FontLoader();
 fontLoader.load(
   "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
   (font) => {
-    const textGeometry = new TextGeometry("AUDREY THE MASTER ARCHITECT", {
+    // South text
+    const textGeometry = new TextGeometry("WELCOME TO LOCATION-BASED AR", {
       font: font,
-      size: 1, // Adjust size as needed
-      height: 0.1, // Depth of the text
+      size: 2, // Adjust size as needed
+      height: 0.2, // Depth of the text
       curveSegments: 12, // Smoothing
     });
 
     const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
-    // Position the text south relative to the scene
-    textMesh.position.set(0, 0, 50); // Adjust Y position as needed
-    textMesh.rotation.y = 180; // Face south (180 degrees)
+    // Position the text north relative to the scene
+    textMesh.position.set(0, 0, 50); // Adjust Z position as needed
+    textMesh.rotation.y = 0; // Face north (0 degrees)
 
     scene.add(textMesh);
+
+    // West text
+    const westTextGeometry = new TextGeometry("THANK YOU FOR INTERACTING", {
+      font: font,
+      size: 2, // Adjust size as needed
+      height: 0.2, // Depth of the text
+      curveSegments: 12, // Smoothing
+    });
+
+    const westTextMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const westTextMesh = new THREE.Mesh(westTextGeometry, westTextMaterial);
+
+    // Position the text west relative to the scene
+    westTextMesh.position.set(50, 0, 0); // Adjust X position for west
+    westTextMesh.rotation.y = 90; // Face west (90 degrees)
+
+    scene.add(westTextMesh);
   },
 );
 
