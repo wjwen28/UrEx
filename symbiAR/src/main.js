@@ -113,7 +113,7 @@ let modelTemplate; // Will store the loaded model to clone from
 
 // Constants
 const ANIMATION_SPEED = 0.1;
-const DISTANCE_MULTIPLIER = 1.5;
+const DISTANCE_MULTIPLIER = 0.8;
 const HEIGHT_OFFSET = 0;
 const MODEL_SCALE = 5; // Adjust this based on your model size
 
@@ -180,7 +180,7 @@ loader.load(
 // Separate function to create models
 function createModels(pos) {
   const modelProps = [
-    { latDis: 0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffffff },
+    { latDis: 0 * DISTANCE_MULTIPLIER, lonDis: 0-0.001, color: 0xffffff },
   ];
 
   modelProps.forEach(({ latDis, lonDis, color }) => {
