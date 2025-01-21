@@ -180,7 +180,7 @@ loader.load(
 // Separate function to create models
 function createModels(pos) {
   const modelProps = [
-    { latDis: 0 * DISTANCE_MULTIPLIER, lonDis: 0-0.001, color: 0xffffff },
+    { latDis: -0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffffff },
   ];
 
   modelProps.forEach(({ latDis, lonDis, color }) => {
