@@ -19,8 +19,8 @@ fontLoader.load(
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
     // Position the text south relative to the scene
-    textMesh.position.set(0, 0, 50);
-    textMesh.rotation.y(180);
+    textMesh.position.set(0, 0, 50); // Adjust Y position as needed
+    textMesh.rotation.y = 180; // Face south (180 degrees)
 
     scene.add(textMesh);
   },
