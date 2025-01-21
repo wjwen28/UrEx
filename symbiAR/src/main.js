@@ -1,6 +1,30 @@
 import * as THREE from "three";
 import * as LocAR from "locar";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+
+const fontLoader = new FontLoader();
+fontLoader.load(
+  "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+  (font) => {
+    const textGeometry = new TextGeometry("AUDREY THE MASTER ARCHITECT", {
+      font: font,
+      size: 1, // Adjust size as needed
+      height: 0.1, // Depth of the text
+      curveSegments: 12, // Smoothing
+    });
+
+    const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+    // Position the text south relative to the scene
+    textMesh.position.set(0, 0, 50);
+    textMesh.rotation.y(180);
+
+    scene.add(textMesh);
+  },
+);
 
 // Request device orientation permission for iOS
 async function requestDeviceOrientation() {
@@ -92,7 +116,7 @@ directionalLight.shadow.camera.far = 50;
 
 // Load the model before creating instances
 loader.load(
-  "/R block.gltf",
+  "/rblock.glb",
   (gltf) => {
     console.log("Model loaded successfully:", gltf);
     modelTemplate = gltf.scene;
@@ -138,10 +162,7 @@ loader.load(
 // Separate function to create models
 function createModels(pos) {
   const modelProps = [
-    { latDis: 0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xff0000 },
-    { latDis: -0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffff00 },
-    { latDis: 0, lonDis: -0.001 * DISTANCE_MULTIPLIER, color: 0x00ffff },
-    { latDis: 0, lonDis: 0.001 * DISTANCE_MULTIPLIER, color: 0x00ff00 },
+    { latDis: 0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffffff },
   ];
 
   modelProps.forEach(({ latDis, lonDis, color }) => {
@@ -153,7 +174,9 @@ function createModels(pos) {
         child.material.color.setHex(color);
         child.material.transparent = true;
         child.material.opacity = 0.8;
-        child.material.depthTest = false;
+        child.material.depthTest = true;
+        child.geometry.computeBoundingBox(); // Ensure bounding box is calculated
+        child.geometry.computeBoundingSphere(); // Ensure bounding sphere is calculated
       }
     });
 
@@ -186,51 +209,7 @@ function createModels(pos) {
 // Create models at initial GPS location
 locar.on("gpsupdate", (pos) => {
   if (firstLocation && modelTemplate) {
-    const modelProps = [
-      { latDis: 0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xff0000 },
-      { latDis: -0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffff00 },
-      { latDis: 0, lonDis: -0.001 * DISTANCE_MULTIPLIER, color: 0x00ffff },
-      { latDis: 0, lonDis: 0.001 * DISTANCE_MULTIPLIER, color: 0x00ff00 },
-    ];
-
-    modelProps.forEach(({ latDis, lonDis, color }) => {
-      const modelInstance = modelTemplate.clone();
-
-      modelInstance.traverse((child) => {
-        if (child.isMesh) {
-          child.material = child.material.clone();
-          child.material.color.setHex(color);
-          child.material.transparent = true;
-          child.material.opacity = 0.8;
-          child.material.depthTest = false;
-        }
-      });
-
-      locar.add(
-        modelInstance,
-        pos.coords.longitude + lonDis * 0.5,
-        pos.coords.latitude + latDis * 0.5,
-        HEIGHT_OFFSET,
-      );
-
-      console.log("Model added at:", {
-        longitude: pos.coords.longitude + lonDis * 0.5,
-        latitude: pos.coords.latitude + latDis * 0.5,
-        height: HEIGHT_OFFSET,
-        worldPosition: modelInstance.position.clone(),
-      });
-
-      models.set(modelInstance, {
-        originalPosition: modelInstance.position.clone(),
-        originalScale: modelInstance.scale.clone(),
-        originalColor: color,
-        lastHoverTime: 0,
-      });
-
-      modelInstance.renderOrder = 1;
-    });
-
-    firstLocation = false;
+    createModels(pos);
   }
 });
 
