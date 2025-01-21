@@ -20,7 +20,7 @@ fontLoader.load(
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
 
     // Position the text north relative to the scene
-    textMesh.position.set(0, 0, 50); // Adjust Z position as needed
+    textMesh.position.set(0, 0, -50); // Adjust Z position as needed
     textMesh.rotation.y = 0; // Face north (0 degrees)
 
     scene.add(textMesh);
@@ -37,7 +37,7 @@ fontLoader.load(
     const westTextMesh = new THREE.Mesh(westTextGeometry, westTextMaterial);
 
     // Position the text west relative to the scene
-    westTextMesh.position.set(50, 0, 0); // Adjust X position for west
+    westTextMesh.position.set(-50, 0, 0); // Adjust X position for west
     westTextMesh.rotation.y = 90; // Face west (90 degrees)
 
     scene.add(westTextMesh);
