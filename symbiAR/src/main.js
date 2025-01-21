@@ -113,7 +113,7 @@ let modelTemplate; // Will store the loaded model to clone from
 
 // Constants
 const ANIMATION_SPEED = 0.1;
-const DISTANCE_MULTIPLIER = 0.8;
+const DISTANCE_MULTIPLIER = 1.5;
 const HEIGHT_OFFSET = 0;
 const MODEL_SCALE = 5; // Adjust this based on your model size
 
