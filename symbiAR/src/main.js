@@ -115,7 +115,7 @@ let modelTemplate; // Will store the loaded model to clone from
 const ANIMATION_SPEED = 0.1;
 const DISTANCE_MULTIPLIER = 0.8;
 const HEIGHT_OFFSET = 0;
-const MODEL_SCALE = 5; // Adjust this based on your model size
+const MODEL_SCALE = 4; // Adjust this based on your model size
 
 let firstLocation = true;
 let deviceOrientationControls;
@@ -181,22 +181,45 @@ loader.load(
 function createModels(pos) {
   const modelProps = [
     { latDis: -0.001 * DISTANCE_MULTIPLIER, lonDis: 0, color: 0xffffff },
+    // Add new green cube to the east
+    {
+      latDis: 0,
+      lonDis: 0.001 * DISTANCE_MULTIPLIER,
+      color: 0x00ff00,
+      isCube: true,
+    },
   ];
 
-  modelProps.forEach(({ latDis, lonDis, color }) => {
-    const modelInstance = modelTemplate.clone();
+  modelProps.forEach(({ latDis, lonDis, color, isCube }) => {
+    let modelInstance;
 
-    modelInstance.traverse((child) => {
-      if (child.isMesh) {
-        child.material = child.material.clone();
-        child.material.color.setHex(color);
-        child.material.transparent = true;
-        child.material.opacity = 0.8;
-        child.material.depthTest = true;
-        child.geometry.computeBoundingBox(); // Ensure bounding box is calculated
-        child.geometry.computeBoundingSphere(); // Ensure bounding sphere is calculated
-      }
-    });
+    if (isCube) {
+      // Create cube geometry
+      const geometry = new THREE.BoxGeometry(8, 8, 8);
+      const material = new THREE.MeshStandardMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.8,
+      });
+      modelInstance = new THREE.Mesh(geometry, material);
+
+      // Enable shadows for cube
+      modelInstance.castShadow = true;
+      modelInstance.receiveShadow = true;
+    } else {
+      modelInstance = modelTemplate.clone();
+      modelInstance.traverse((child) => {
+        if (child.isMesh) {
+          child.material = child.material.clone();
+          child.material.color.setHex(color);
+          child.material.transparent = true;
+          child.material.opacity = 0.8;
+          child.material.depthTest = true;
+          child.geometry.computeBoundingBox();
+          child.geometry.computeBoundingSphere();
+        }
+      });
+    }
 
     const longitude = pos.coords.longitude + lonDis * 0.5;
     const latitude = pos.coords.latitude + latDis * 0.5;
@@ -208,6 +231,7 @@ function createModels(pos) {
       latitude,
       height: HEIGHT_OFFSET,
       color: color.toString(16),
+      type: isCube ? "cube" : "gltf",
       worldPosition: modelInstance.position.toArray(),
     });
 
@@ -223,6 +247,9 @@ function createModels(pos) {
 
   firstLocation = false;
 }
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
 
 // Create models at initial GPS location
 locar.on("gpsupdate", (pos) => {
@@ -243,7 +270,9 @@ function updateModels() {
     const data = models.get(model);
     const isHovered =
       intersects.length > 0 &&
-      (intersects[0].object === model || intersects[0].object.parent === model);
+      (intersects[0].object === model || // Direct intersection (for cube)
+        intersects[0].object.parent === model || // For GLTF model
+        model.getObjectById(intersects[0].object.id)); // Deep check for nested objects
 
     if (isHovered) {
       // Bring models forward for inspection
